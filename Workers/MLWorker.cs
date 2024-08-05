@@ -118,6 +118,8 @@ namespace WebApplication2.Workers
                             await optionsService.UpdateOrAdd(new Option() { Key = "ML_RMS error", Value = $"{metrics.RootMeanSquaredError:0.##}" });
                             await optionsService.UpdateOrAdd(new Option() { Key = "ML_MS error", Value = $"{metrics.MeanSquaredError:0.##}" });
 
+                            await _telegramService.SendMessage($"R^2: {metrics.RSquared:0.##}\nRMS error: {metrics.RootMeanSquaredError:0.##}\nMS error: {metrics.MeanSquaredError:0.##}", "MLWorkerStat");
+
                             _mlContext.Model.Save(model, data.Schema, _modelFilePath);
 
                             await Task.Delay(TimeSpan.FromHours(12));
