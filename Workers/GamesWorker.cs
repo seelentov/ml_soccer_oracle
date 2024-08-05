@@ -1,135 +1,113 @@
-﻿using Microsoft.Extensions.Logging;
-using OpenQA.Selenium.Chrome;
+﻿
+using Microsoft.Extensions.Logging;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using WebApplication2.Data;
 using WebApplication2.Services;
+using static WebApplication2.Services.Soccer365Parser;
 
 namespace WebApplication2.Workers
 {
-    public class GamesWorker: IHostedService
+    public class GamesWorker : IHostedService
     {
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly FbrefParser _fbrefParser;
         private readonly ILogger<GamesWorker> _logger;
-        private readonly ChromeDriver _driver;
-        public GamesWorker(IServiceScopeFactory scopeFactory, ILogger<GamesWorker> logger, FbrefParser fbrefParser, SeleniumFactory seleniumFactory)
+        private readonly Soccer365Parser _soccer365parser;
+        private readonly IWebDriver _driver;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly MethodOptions _options;
+
+        public GamesWorker(ILogger<GamesWorker> logger, Soccer365Parser soccer365parser, SeleniumFactory selenium, IServiceScopeFactory scopeFactory)
         {
-            _scopeFactory = scopeFactory;
             _logger = logger;
-            _fbrefParser = fbrefParser;
-            _driver = seleniumFactory.Get();
+            _soccer365parser = soccer365parser;
+            _driver = selenium.Get();
+            _scopeFactory = scopeFactory;
+
+            _options = new MethodOptions()
+            {
+                driver = _driver,
+                wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            };
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-
             _ = Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    try
+                    using (var scope = _scopeFactory.CreateScope())
                     {
-                        using (var scope = _scopeFactory.CreateScope())
+                        try
                         {
-                            await Cycle(scope);
+                            var leaguesService = scope.ServiceProvider.GetRequiredService<LeaguesService>();
+                            var gamesService = scope.ServiceProvider.GetRequiredService<GamesService>();
+
+                            var leagues = (await leaguesService.GetAll()).ToList();
+
+                            leagues.Reverse();
+
+                            foreach (var league in leagues)
+                            {
+                                if (league.Parsed && league.Year != null && league.Year < DateTime.Now.Year)
+                                {
+                                    continue;
+                                }
+
+                                int? year = null!;
+
+                                var gameLinks = await _soccer365parser.GetGameLinks(league, _options);
+
+                                foreach (var gameLink in gameLinks)
+                                {
+                                    var gameChecker = await gamesService.Get(g => g.Url == gameLink);
+
+                                    if (gameChecker != null && (gameChecker.MatchDate.Year < DateTime.Now.Year || gameChecker.UpdatedAt > DateTime.UtcNow.AddHours(-1)))
+                                    {
+                                        _logger.LogInformation("Skip " + gameChecker.Url, Microsoft.Extensions.Logging.LogLevel.Information);
+                                        continue;
+                                    }
+
+                                    var game = await _soccer365parser.GetGameByLink(gameLink, _options);
+
+                                    if (game != null)
+                                    {
+                                        game.League = league;
+
+                                        if (year == null || year < game.MatchDate.Year)
+                                        {
+                                            year = game.MatchDate.Year;
+                                        }
+
+                                        await gamesService.UpdateOrAdd(game);
+                                        _logger.LogInformation(game.Team1.Name + " | " + game.Team2.Name + " add in DB (" + game.Url + ")", Microsoft.Extensions.Logging.LogLevel.Information);
+                                    }
+                                }
+
+                                leaguesService.CheckParsed(l => l.Url == league.Url);
+
+                                leaguesService.UpdateYear(l => l.Url == league.Url, year);
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogInformation(ex, ex.Message);
+                        catch (Exception ex)
+                        {
+                            _logger.LogInformation(ex, ex.Message, Microsoft.Extensions.Logging.LogLevel.Error);
+                        }
                     }
 
                 }
             }, cancellationToken);
-
-
             return Task.CompletedTask;
-        }
-
-        private async Task Cycle(IServiceScope scope)
-        {
-            var leaguesService = scope.ServiceProvider.GetRequiredService<LeaguesService>();
-            var gamesService = scope.ServiceProvider.GetRequiredService<GamesService>();
-
-            _logger.LogInformation("Start GamesWorker Cycle", LogLevel.Information);
-
-            var leagues = (await leaguesService.GetAll()).ToList();
-            var games = (await gamesService.GetAll()).ToList();
-
-            _logger.LogInformation("Get leagues", LogLevel.Information);
-
-            foreach (var league in leagues)
-            {
-                if(league.Parsed && !league.Year.Contains(DateTime.UtcNow.Year.ToString()))
-                {
-                    continue;
-                }
-
-                var gameLinks = await _fbrefParser.GetGamesWithLinksAndResultsByLeagueLink(league.Url, _driver);
-
-                foreach(var gameLink in gameLinks)
-                {
-                    if(games.FirstOrDefault(g=>g.Url == gameLink.Url) != null)
-                    {
-                        continue;
-                    }
-
-                    _logger.LogInformation("Parse game " + gameLink.Url, LogLevel.Information);
-                    var game = await _fbrefParser.GetGameByLinkAndResult(gameLink, _driver);
-                    
-                    game.League = league;
-
-                    _logger.LogInformation("Parse team " + game.Team1.Url, LogLevel.Information);
-
-                    var team1 = await _fbrefParser.GetTeam(game.Team1, league, _driver);
-
-                    if(team1.TopTeamScorer == null || team1.Goalkeeper == null)
-                    {
-                        continue;
-                    }
-
-                    _logger.LogInformation("Parse player " + team1.TopTeamScorer.Url, LogLevel.Information);
-
-                    team1.TopTeamScorer = await _fbrefParser.GetPlayer(team1.TopTeamScorer, league, _driver);
-
-                    _logger.LogInformation("Parse player " + team1.Goalkeeper.Url, LogLevel.Information);
-
-                    team1.Goalkeeper = await _fbrefParser.GetPlayer(team1.Goalkeeper, league, _driver);
-
-                    game.Team1 = team1;
-
-                    _logger.LogInformation("Parse team " + game.Team2.Url, LogLevel.Information);
-
-                    var team2 = await _fbrefParser.GetTeam(game.Team2, league, _driver);
-
-                    if (team2.TopTeamScorer == null || team2.Goalkeeper == null)
-                    {
-                        continue;
-                    }
-
-                    _logger.LogInformation("Parse player " + team2.TopTeamScorer.Url, LogLevel.Information);
-
-                    team2.TopTeamScorer = await _fbrefParser.GetPlayer(team2.TopTeamScorer, league, _driver);
-
-                    _logger.LogInformation("Parse player " + team2.Goalkeeper.Url, LogLevel.Information);
-
-                    team2.Goalkeeper = await _fbrefParser.GetPlayer(team2.Goalkeeper, league, _driver);
-
-                    game.Team2 = team2;
-
-                    await gamesService.UpdateOrAdd(game);
-
-                    _logger.LogInformation("Add game " + game.Team1.Name + "|" + game.Team2.Name, LogLevel.Information);
-                }
-
-                leaguesService.CheckParsed(l => l.Url == league.Url);
-            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            if(_driver != null)
+            if (_driver != null)
             {
+                _driver.Close();
                 _driver.Quit();
             }
+
             return Task.CompletedTask;
         }
     }

@@ -5,10 +5,11 @@ using WebApplication2.Services.Interfaces;
 
 namespace WebApplication2.Services
 {
-    public class SeleniumFactory: IFactory<ChromeDriver>
+    public class SeleniumFactory : IFactory<ChromeDriver>
     {
         private readonly ChromeOptions _driverOptions;
-        public SeleniumFactory()
+        private readonly IConfiguration _configuration;
+        public SeleniumFactory(IConfiguration _configuration)
         {
             ChromeOptions options = new ChromeOptions();
 
@@ -25,22 +26,20 @@ namespace WebApplication2.Services
             options.AddArgument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36");
             options.AddArgument("--headless=new");
             options.AddArgument("disable-gpu");
-            options.AddArgument("no-sandbox");
+        options.AddArgument("no-sandbox");
             options.AddArgument("--disable-extensions");
             options.AddArgument("--disable-features=NetworkService");
             options.AddArgument("--ignore-ssl-errors");
             options.AddArgument("--ignore-certificate-errors");
-            options.AddArgument("--test-type");
 
             _driverOptions = options;
             _driverOptions.PageLoadStrategy = PageLoadStrategy.Eager;
-
         }
         public ChromeDriver Get()
         {
             return new ChromeDriver(_driverOptions);
         }
-        
+
 
     }
 }

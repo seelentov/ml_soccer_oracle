@@ -142,16 +142,22 @@ namespace WebApplication2.Services
 
         public float ToFloat(string str)
         {
-            if (str == "" || str == " ")
+            var strProxy = GetNumberStringInStringWithPercent(str);
+
+            if (strProxy == "" || strProxy == " ")
             {
                 return 0.0f;
             }
 
-            var isNegative = str[0] == '-';
-
-            var result = float.Parse(str, CultureInfo.InvariantCulture);
+            var result = float.Parse(strProxy, CultureInfo.InvariantCulture);
 
             return result;
+        }
+        public string GetNumberStringInStringWithPercent(string input)
+        {
+            string[] parts = input.Split(' ');
+
+            return parts[parts.Length - 1].Contains("%") ? parts[0] : parts[parts.Length - 1];
         }
 
         public string ReplaceFirst(string text, string search, string replace)

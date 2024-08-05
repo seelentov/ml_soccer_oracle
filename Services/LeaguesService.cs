@@ -34,6 +34,7 @@ namespace WebApplication2.Services
         public async Task<IEnumerable<League>> GetAll()
         {
             var data = _dbContext.Leagues;
+
             return data;
         }
 
@@ -81,19 +82,26 @@ namespace WebApplication2.Services
 
         public async Task UpdateOrAdd(League game)
         {
-            var data = _dbContext.Leagues.FirstOrDefault(g => g.Url == game.Url);
-
-            if (data != null)
+            if (game.Url.Contains("http"))
             {
-                _dbContext.Leagues.Attach(data);
-                data = game;
-            }
-            else
-            {
-                await _dbContext.AddAsync(game);
-            }
+                var data = _dbContext.Leagues.FirstOrDefault(g => g.Url == game.Url);
 
-            _dbContext.SaveChanges();
+                if (data != null)
+                {
+                    var year = data.Year;
+
+                    _dbContext.Leagues.Attach(data);
+
+                    data = game;
+                    data.Year = year;
+                }
+                else
+                {
+                    await _dbContext.AddAsync(game);
+                }
+
+                _dbContext.SaveChanges();
+            }
         }
 
         public void CheckParsed(Expression<Func<League, bool>> predicate)
@@ -103,6 +111,17 @@ namespace WebApplication2.Services
             if (data != null)
             {
                 data.Parsed = true;
+                _dbContext.SaveChanges();
+            }
+        }
+
+        public void UpdateYear(Expression<Func<League, bool>> predicate, int? year)
+        {
+            var data = _dbContext.Leagues.FirstOrDefault(predicate);
+
+            if (data != null)
+            {
+                data.Year = year;
                 _dbContext.SaveChanges();
             }
         }

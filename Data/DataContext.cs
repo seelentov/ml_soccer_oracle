@@ -10,12 +10,10 @@ namespace WebApplication2.Data
     {
         public DbSet<Game> Games { get; set; }
         public DbSet<League> Leagues { get; set; }
-        public DbSet<Player> Players { get; set; }
         public DbSet<Team> Teams { get; set; }
-        public DbSet<HeadToHeadStats> HeadToHeadStats { get; set; }
-        public DbSet<MinStats> MinStats { get; set; }
-        public DbSet<NineteenStats> NineteenStats { get; set; }
-        public DbSet<StandardStats> StandardStats { get; set; }
+        public DbSet<HeadToHeadBase> HeadToHeadBase { get; set; }
+        public DbSet<HeadToHeadInGame> HeadToHeadInGame { get; set; }
+        public DbSet<Option> Options { get; set; }
 
         public string DbPath { get; }
 
@@ -48,7 +46,10 @@ namespace WebApplication2.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
+/*            modelBuilder.Entity<League>()
+                .HasMany(e => e.Games)
+                .WithOne(e => e.League)
+                .IsRequired();*/
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

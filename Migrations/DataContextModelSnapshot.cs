@@ -26,9 +26,6 @@ namespace WebApplication2.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("HeadToHeadStatsId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("LeagueId")
                         .HasColumnType("INTEGER");
 
@@ -53,8 +50,6 @@ namespace WebApplication2.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("HeadToHeadStatsId");
-
                     b.HasIndex("LeagueId");
 
                     b.HasIndex("Team1Id");
@@ -77,6 +72,9 @@ namespace WebApplication2.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ParseType")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Parsed")
                         .HasColumnType("INTEGER");
 
@@ -87,86 +85,40 @@ namespace WebApplication2.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Year")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("Year")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.ToTable("Leagues");
                 });
 
-            modelBuilder.Entity("WebApplication2.Models.Player", b =>
+            modelBuilder.Entity("WebApplication2.Models.Option", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<float>("Age")
-                        .HasColumnType("REAL");
-
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("NineteenStatsId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StandardStatsId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Url")
+                    b.Property<string>("Value")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NineteenStatsId");
-
-                    b.HasIndex("StandardStatsId");
-
-                    b.ToTable("Players");
+                    b.ToTable("Options");
                 });
 
-            modelBuilder.Entity("WebApplication2.Models.Stats.HeadToHeadStats", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<float>("AverageGoalDifference")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("AverageGoals")
-                        .HasColumnType("REAL");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<float>("Draws")
-                        .HasColumnType("REAL");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<float>("WinsTeam1")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("WinsTeam2")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("HeadToHeadStats");
-                });
-
-            modelBuilder.Entity("WebApplication2.Models.Stats.MinStats", b =>
+            modelBuilder.Entity("WebApplication2.Models.Stats.HeadToHeadBase", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -178,25 +130,37 @@ namespace WebApplication2.Migrations
                     b.Property<float>("Draws")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("GoalsAgainst")
+                    b.Property<float>("DryMatches")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("GoalsDifference")
+                    b.Property<float>("GoalBoth")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("GoalsFor")
+                    b.Property<float>("Goals")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("LgRang")
+                    b.Property<float>("GoalsGame")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("GoalsGameLost")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("GoalsLost")
                         .HasColumnType("REAL");
 
                     b.Property<float>("Loses")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("MatchesPlayed")
+                    b.Property<float>("Matches")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("Points")
+                    b.Property<float>("RestHours")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("TotalLess25")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("TotalMore25")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -207,86 +171,48 @@ namespace WebApplication2.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MinStats");
+                    b.ToTable("HeadToHeadBase");
                 });
 
-            modelBuilder.Entity("WebApplication2.Models.Stats.NineteenStats", b =>
+            modelBuilder.Entity("WebApplication2.Models.Stats.HeadToHeadInGame", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<float>("Assists")
+                    b.Property<float>("Corner")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<float>("Goals")
+                    b.Property<float>("Offsides")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("Minutes")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("NonPenaltyGoals")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("PenaltyAssists")
-                        .HasColumnType("REAL");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("NineteenStats");
-                });
-
-            modelBuilder.Entity("WebApplication2.Models.Stats.StandardStats", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<float>("Assists")
-                        .HasColumnType("REAL");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<float>("Goals")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("MatchesPlayed")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("Minutes")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("NonPenaltyGoals")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("PenaltyAttempted")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("PenaltyMade")
+                    b.Property<float>("Possession")
                         .HasColumnType("REAL");
 
                     b.Property<float>("RedCards")
                         .HasColumnType("REAL");
 
-                    b.Property<float>("Starts")
+                    b.Property<float>("ShotsOnTarget")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Strikes")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<float>("Violations")
+                        .HasColumnType("REAL");
 
                     b.Property<float>("YellowCards")
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
 
-                    b.ToTable("StandardStats");
+                    b.ToTable("HeadToHeadInGame");
                 });
 
             modelBuilder.Entity("WebApplication2.Models.Team", b =>
@@ -298,18 +224,18 @@ namespace WebApplication2.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("GoalkeeperId")
+                    b.Property<int>("HeadToHeadBaseId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("MinStatsId")
+                    b.Property<int>("HeadToHeadInGameId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("HeadToHeadInGameOpponentId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("TopTeamScorerId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -320,23 +246,17 @@ namespace WebApplication2.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GoalkeeperId");
+                    b.HasIndex("HeadToHeadBaseId");
 
-                    b.HasIndex("MinStatsId");
+                    b.HasIndex("HeadToHeadInGameId");
 
-                    b.HasIndex("TopTeamScorerId");
+                    b.HasIndex("HeadToHeadInGameOpponentId");
 
                     b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("WebApplication2.Models.Game", b =>
                 {
-                    b.HasOne("WebApplication2.Models.Stats.HeadToHeadStats", "HeadToHeadStats")
-                        .WithMany()
-                        .HasForeignKey("HeadToHeadStatsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("WebApplication2.Models.League", "League")
                         .WithMany("Games")
                         .HasForeignKey("LeagueId")
@@ -355,8 +275,6 @@ namespace WebApplication2.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("HeadToHeadStats");
-
                     b.Navigation("League");
 
                     b.Navigation("Team1");
@@ -364,50 +282,31 @@ namespace WebApplication2.Migrations
                     b.Navigation("Team2");
                 });
 
-            modelBuilder.Entity("WebApplication2.Models.Player", b =>
-                {
-                    b.HasOne("WebApplication2.Models.Stats.NineteenStats", "NineteenStats")
-                        .WithMany()
-                        .HasForeignKey("NineteenStatsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WebApplication2.Models.Stats.StandardStats", "StandardStats")
-                        .WithMany()
-                        .HasForeignKey("StandardStatsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("NineteenStats");
-
-                    b.Navigation("StandardStats");
-                });
-
             modelBuilder.Entity("WebApplication2.Models.Team", b =>
                 {
-                    b.HasOne("WebApplication2.Models.Player", "Goalkeeper")
+                    b.HasOne("WebApplication2.Models.Stats.HeadToHeadBase", "HeadToHeadBase")
                         .WithMany()
-                        .HasForeignKey("GoalkeeperId")
+                        .HasForeignKey("HeadToHeadBaseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApplication2.Models.Stats.MinStats", "MinStats")
+                    b.HasOne("WebApplication2.Models.Stats.HeadToHeadInGame", "HeadToHeadInGame")
                         .WithMany()
-                        .HasForeignKey("MinStatsId")
+                        .HasForeignKey("HeadToHeadInGameId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApplication2.Models.Player", "TopTeamScorer")
+                    b.HasOne("WebApplication2.Models.Stats.HeadToHeadInGame", "HeadToHeadInGameOpponent")
                         .WithMany()
-                        .HasForeignKey("TopTeamScorerId")
+                        .HasForeignKey("HeadToHeadInGameOpponentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Goalkeeper");
+                    b.Navigation("HeadToHeadBase");
 
-                    b.Navigation("MinStats");
+                    b.Navigation("HeadToHeadInGame");
 
-                    b.Navigation("TopTeamScorer");
+                    b.Navigation("HeadToHeadInGameOpponent");
                 });
 
             modelBuilder.Entity("WebApplication2.Models.League", b =>

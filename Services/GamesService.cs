@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using WebApplication2.Data;
 using WebApplication2.Models;
 using WebApplication2.Models.ML;
@@ -56,13 +57,24 @@ namespace WebApplication2.Services
 
         public async Task<IEnumerable<MLGame>> GetRangeML(Expression<Func<Game, bool>> predicate)
         {
-            var data = _dbContext.Games.Where(predicate).Where(g=>g.Result != null).Select(g=>_MLGameAdapter.Adapt(g));
+            var data = _dbContext.Games.Where(predicate).Where(g=>g.Result != null)
+                .Include(g=>g.League)
+                .Select(g=>_MLGameAdapter.Adapt(g));
             return data;
         }
 
         public async Task<IEnumerable<MLGame>> GetAllML()
         {
-            var data = _dbContext.Games.Where(g => g.Result != null).Select(g => _MLGameAdapter.Adapt(g));
+            var data = _dbContext.Games
+                .Where(g => g.Result != null)
+                .Include(g => g.League)
+                .Include(g => g.Team1.HeadToHeadBase)
+                .Include(g => g.Team1.HeadToHeadInGame)
+                .Include(g => g.Team1.HeadToHeadInGameOpponent)
+                .Include(g => g.Team2.HeadToHeadBase)
+                .Include(g => g.Team2.HeadToHeadInGame)
+                .Include(g => g.Team2.HeadToHeadInGameOpponent)
+                .Select(g => _MLGameAdapter.Adapt(g));
             return data;
         }
 

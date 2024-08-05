@@ -1,100 +1,84 @@
-﻿using Microsoft.Extensions.Logging;
-using OpenQA.Selenium.Chrome;
+﻿
+using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using WebApplication2.Data;
 using WebApplication2.Services;
+using static WebApplication2.Services.Soccer365Parser;
 
 namespace WebApplication2.Workers
 {
-    public class LeaguesWorker: IHostedService
+    public class LeaguesWorker : IHostedService
     {
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly FbrefParser _fbrefParser;
         private readonly ILogger<LeaguesWorker> _logger;
-        private readonly ChromeDriver _driver;
-        public LeaguesWorker(IServiceScopeFactory scopeFactory, ILogger<LeaguesWorker> logger, FbrefParser fbrefParser, SeleniumFactory seleniumFactory)
+        private readonly Soccer365Parser _soccer365parser;
+        private readonly IWebDriver _driver;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly MethodOptions _options;
+
+        public LeaguesWorker(ILogger<LeaguesWorker> logger, Soccer365Parser soccer365parser, SeleniumFactory selenium, IServiceScopeFactory scopeFactory)
         {
-            _scopeFactory = scopeFactory;
             _logger = logger;
-            _fbrefParser = fbrefParser;
-            _driver = seleniumFactory.Get();
+            _soccer365parser = soccer365parser;
+            _driver = selenium.Get();
+            _scopeFactory = scopeFactory;
+
+            _options = new MethodOptions()
+            {
+                driver = _driver,
+                wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            };
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-
             _ = Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    try
+                    using (var scope = _scopeFactory.CreateScope())
                     {
-                        using (var scope = _scopeFactory.CreateScope())
+                        try
                         {
-                            await Cycle(scope, cancellationToken);
+                            var leaguesService = scope.ServiceProvider.GetRequiredService<LeaguesService>();
+                            
+                            var parsedLeagues = await _soccer365parser.GetLeagues(_options);
+
+                            foreach (var parsedLeague in parsedLeagues)
+                            {
+                                var nestedLeagues = await _soccer365parser.GetNestedLeagues(parsedLeague, _options);
+
+                                foreach(var nestedLeague in nestedLeagues)
+                                {
+                                    await leaguesService.UpdateOrAdd(nestedLeague);
+                                    _logger.LogInformation("Add nested league in DB " + nestedLeague.Name, Microsoft.Extensions.Logging.LogLevel.Information);
+
+                                }
+
+                                await leaguesService.UpdateOrAdd(parsedLeague);
+                                _logger.LogInformation("Add league in DB " + parsedLeague.Name, Microsoft.Extensions.Logging.LogLevel.Information);
+                            }
+
+                            await Task.Delay(TimeSpan.FromDays(1));
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogInformation(ex, ex.Message, LogLevel.Error);
+                        catch (Exception ex)
+                        {
+                            _logger.LogInformation(ex, ex.Message, Microsoft.Extensions.Logging.LogLevel.Information);
+                        }
                     }
 
                 }
             }, cancellationToken);
-
-
             return Task.CompletedTask;
-        }
-
-        private async Task Cycle(IServiceScope scope, CancellationToken cancellationToken)
-        {
-            var leaguesService = scope.ServiceProvider.GetRequiredService<LeaguesService>();
-
-            var leagues = (await leaguesService.GetAll()).ToList();
-
-            _logger.LogInformation("Start LeaguesWorker Cycle", LogLevel.Information);
-
-            var yearLinks = _fbrefParser.GetYearsLinksList(_driver);
-
-            _logger.LogInformation("Load years links", LogLevel.Information);
-
-            foreach (var yearLink in yearLinks)
-            {
-                var leaguesLinks = _fbrefParser.GetYearLeaguesLinksList(yearLink, _driver);
-
-                _logger.LogInformation("Load leagues links by: " + yearLink, LogLevel.Information);
-
-                foreach ( var leagueLink in leaguesLinks)
-                {
-                    var isLeagueExist = (await leaguesService.Get(l => l.Url == leagueLink)) != null;
-
-                    if (isLeagueExist && !yearLink.Contains(DateTime.UtcNow.Year.ToString()))
-                    {
-                        _logger.LogInformation("Stop LeaguesWorker", LogLevel.Information);
-                        await Task.Delay(10);
-                        continue;
-                    }
-
-                    var league = await _fbrefParser.GetLeagueData(leagueLink, _driver);
-
-                    if (league != null)
-                    {
-                        await leaguesService.UpdateOrAdd(league);
-
-                        _logger.LogInformation("Save League in DB: " + league.Name, LogLevel.Information);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Cannot find League: " + leagueLink, LogLevel.Warning);
-                    }
-                }
-            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            if(_driver != null)
+            if (_driver != null)
             {
+                _driver.Close();
                 _driver.Quit();
             }
+
             return Task.CompletedTask;
         }
     }
