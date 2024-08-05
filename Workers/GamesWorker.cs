@@ -15,8 +15,9 @@ namespace WebApplication2.Workers
         private readonly IWebDriver _driver;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly MethodOptions _options;
+        private readonly TelegramService _telegramService;
 
-        public GamesWorker(ILogger<GamesWorker> logger, Soccer365Parser soccer365parser, SeleniumFactory selenium, IServiceScopeFactory scopeFactory)
+        public GamesWorker(ILogger<GamesWorker> logger, Soccer365Parser soccer365parser, SeleniumFactory selenium, IServiceScopeFactory scopeFactory, TelegramService telegramService)
         {
             _logger = logger;
             _soccer365parser = soccer365parser;
@@ -28,6 +29,7 @@ namespace WebApplication2.Workers
                 driver = _driver,
                 wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
             };
+            _telegramService = telegramService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -53,7 +55,6 @@ namespace WebApplication2.Workers
                                 {
                                     continue;
                                 }
-
                                 int? year = null!;
 
                                 var gameLinks = await _soccer365parser.GetGameLinks(league, _options);
@@ -102,6 +103,7 @@ namespace WebApplication2.Workers
                         catch (Exception ex)
                         {
                             _logger.LogInformation(ex, ex.Message, Microsoft.Extensions.Logging.LogLevel.Error);
+                            await _telegramService.SendMessage(ex.Message, "GamesWorkerError");
                         }
                     }
 

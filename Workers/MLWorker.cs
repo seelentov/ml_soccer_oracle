@@ -13,6 +13,7 @@ namespace WebApplication2.Workers
         private readonly ILogger<MLWorker> _logger;
         private readonly Soccer365Parser _soccer365parser;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly TelegramService _telegramService;
         private readonly MLContext _mlContext;
         private readonly string _resultKey;
         private readonly InputOutputColumnPair[] _categoriesKeys;
@@ -20,7 +21,7 @@ namespace WebApplication2.Workers
         private readonly string _modelFilePath;
 
 
-        public MLWorker(Soccer365Parser soccer365parser, ILogger<MLWorker> logger, IServiceScopeFactory scopeFactory)
+        public MLWorker(Soccer365Parser soccer365parser, ILogger<MLWorker> logger, IServiceScopeFactory scopeFactory, TelegramService telegramService)
         {
             var resultKey = "Result";
 
@@ -57,6 +58,7 @@ namespace WebApplication2.Workers
             _logger = logger;
             _scopeFactory = scopeFactory;
             _mlContext = new MLContext();
+            _telegramService = telegramService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -123,6 +125,8 @@ namespace WebApplication2.Workers
                         catch (Exception ex)
                         {
                             _logger.LogInformation(ex, ex.Message, LogLevel.Information);
+                            await _telegramService.SendMessage(ex.Message, "MLWorkerError");
+
                         }
                     }
 

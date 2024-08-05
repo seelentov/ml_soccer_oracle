@@ -21,6 +21,7 @@ builder.Services.AddSingleton<HTMLDriverFactory>();
 builder.Services.AddSingleton<SeleniumFactory>();
 builder.Services.AddSingleton<FormatService>();
 builder.Services.AddSingleton<Soccer365Parser>();
+builder.Services.AddSingleton<TelegramService>();
 
 builder.Services.AddTransient<GamesService>();
 builder.Services.AddTransient<OptionsService>();

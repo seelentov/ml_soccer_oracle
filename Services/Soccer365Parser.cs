@@ -25,7 +25,7 @@ namespace WebApplication2.Services
             _formatService = formatService;
         }
 
-        public void Log(string message)
+        private void Log(string message)
         {
             _logger.LogInformation(message, Microsoft.Extensions.Logging.LogLevel.Information);
         }
