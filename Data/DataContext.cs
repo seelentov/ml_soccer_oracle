@@ -14,6 +14,7 @@ namespace WebApplication2.Data
         public DbSet<HeadToHeadBase> HeadToHeadBase { get; set; }
         public DbSet<HeadToHeadInGame> HeadToHeadInGame { get; set; }
         public DbSet<Option> Options { get; set; }
+        public DbSet<CheckedGame> CheckedGames { get; set; }
 
         public string DbPath { get; }
 

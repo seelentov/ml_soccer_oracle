@@ -5,9 +5,9 @@ namespace WebApplication2.Services.Interfaces
 {
     public interface IEntityGetter<T>
     {
-        Task<T> Get(Expression<Func<T, bool>> predicate);
-        Task<T> GetById(int Id);
-        Task<IEnumerable<T>> GetRange(Expression<Func<T, bool>> predicate);
-        Task<IEnumerable<T>> GetAll();
+        public Task<T> Get(Expression<Func<T, bool>> predicate);
+        public Task<T> GetById(int Id);
+        public Task<IEnumerable<T>> GetRange(Expression<Func<T, bool>> predicate);
+        public Task<IEnumerable<T>> GetAll();
     }
 }

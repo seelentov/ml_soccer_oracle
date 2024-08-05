@@ -115,6 +115,17 @@ namespace WebApplication2.Services
             }
         }
 
+        public void CheckParsedNested(Expression<Func<League, bool>> predicate)
+        {
+            var data = _dbContext.Leagues.FirstOrDefault(predicate);
+
+            if (data != null)
+            {
+                data.ParsedNested = true;
+                _dbContext.SaveChanges();
+            }
+        }
+
         public void UpdateYear(Expression<Func<League, bool>> predicate, int? year)
         {
             var data = _dbContext.Leagues.FirstOrDefault(predicate);

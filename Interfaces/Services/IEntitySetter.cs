@@ -5,10 +5,10 @@ namespace WebApplication2.Services.Interfaces
 {
     public interface IEntitySetter<T>
     {
-        Task Remove(Expression<Func<T, bool>> predicate);
-        Task RemoveRange(Expression<Func<T, bool>> predicate);
-        Task Add(T newEntity);
-        Task Update(T newEntity);
-        Task UpdateOrAdd(T newEntity);
+        public Task Remove(Expression<Func<T, bool>> predicate);
+        public Task RemoveRange(Expression<Func<T, bool>> predicate);
+        public Task Add(T newEntity);
+        public Task Update(T newEntity);
+        public Task UpdateOrAdd(T newEntity);
     }
 }

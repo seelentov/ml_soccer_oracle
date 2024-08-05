@@ -121,7 +121,8 @@ namespace WebApplication2.Services
                     {
                         Url = link,
                         Name = parentLeague.Name,
-                        ParseType = parentLeague.ParseType
+                        ParseType = parentLeague.ParseType,
+                        ParsedNested = true,
                     };
 
                     Log("Parsed " + league.Name + league.Url);
@@ -144,7 +145,9 @@ namespace WebApplication2.Services
                     {
                         Url = link,
                         Name = parentLeague.Name,
-                        ParseType = parentLeague.ParseType
+                        ParseType = parentLeague.ParseType,
+                        ParsedNested = true,
+
                     };
 
                     Log("Parsed " + league.Name + league.Url);
@@ -161,7 +164,9 @@ namespace WebApplication2.Services
                     {
                         Url = link,
                         Name = _formatService.ClearString(html),
-                        ParseType = parentLeague.ParseType
+                        ParseType = parentLeague.ParseType,
+                        ParsedNested = true,
+
                     };
 
                     Log("Parsed " + league.Name + " " + league.Url);
@@ -215,7 +220,8 @@ namespace WebApplication2.Services
                 {
                     Url = link,
                     Name = name,
-                    ParseType = parentLeague.ParseType
+                    ParseType = parentLeague.ParseType,
+                    ParsedNested = true
                 };
 
                 Log("Parsed " + league.Name + " " + league.Url);
@@ -297,26 +303,6 @@ namespace WebApplication2.Services
 
             options.driver.Navigate().GoToUrl(url + _tabLink);
 
-            var gameEvents = options.driver.FindElements(By.CssSelector(".live_game"));
-
-
-            var team1Name = gameEvents[0].FindElement(By.CssSelector("a")).Text;
-            var team1ScoreElem = gameEvents[0].FindElement(By.CssSelector(".live_game_goal span")).Text;
-
-            var team2Name = gameEvents[1].FindElement(By.CssSelector("a")).Text;
-            var team2ScoreElem = gameEvents[1].FindElement(By.CssSelector(".live_game_goal span")).Text;
-
-
-            float? result = null;
-
-            if (!team1ScoreElem.Contains("-"))
-            {
-                var team1Score = _formatService.ToFloat(team1ScoreElem);
-                var team2Score = _formatService.ToFloat(team2ScoreElem);
-
-                result = team1Score > team2Score ? -1 : team1Score < team2Score ? 1 : 0;
-            }
-
             var tables = options.driver.FindElements(By.CssSelector("table.tablesorter tbody"));
 
             if ((getGameDataType == GetGameDataType.onlyEnouth || getGameDataType == GetGameDataType.withMissedData) && tables.Count < 2)
@@ -338,6 +324,28 @@ namespace WebApplication2.Services
                 }
             }
 
+            var gameEvents = options.driver.FindElements(By.CssSelector(".live_game"));
+
+
+            var team1Name = gameEvents[0].FindElement(By.CssSelector("a")).Text;
+            var team1ScoreElem = gameEvents[0].FindElement(By.CssSelector(".live_game_goal span")).Text;
+
+            var team2Name = gameEvents[1].FindElement(By.CssSelector("a")).Text;
+            var team2ScoreElem = gameEvents[1].FindElement(By.CssSelector(".live_game_goal span")).Text;
+
+
+            float? result = null;
+
+            if (!team1ScoreElem.Contains("-"))
+            {
+                var team1Score = _formatService.ToFloat(team1ScoreElem);
+                var team2Score = _formatService.ToFloat(team2ScoreElem);
+
+                result = team1Score > team2Score ? -1 : team1Score < team2Score ? 1 : 0;
+            }
+
+           
+
             var dateTimeElemChecker = options.driver.FindElements(By.CssSelector(".block_header h2"));
 
             var date = DateTime.Now;
@@ -354,18 +362,15 @@ namespace WebApplication2.Services
                 }
                 catch
                 {
-                    date = DateTime.Now;
-                    result = null;
-                }
-
-                try
-                {
-                    date = _formatService.ParseDateTime(dateString.Trim(), "dd.MM.yyyy");
-                }
-                catch
-                {
-                    date = DateTime.Now;
-                    result = null;
+                    try
+                    {
+                        date = _formatService.ParseDateTime(dateString.Trim(), "dd.MM.yyyy");
+                    }
+                    catch
+                    {
+                        date = DateTime.Now;
+                        result = null;
+                    }
                 }
             }
 

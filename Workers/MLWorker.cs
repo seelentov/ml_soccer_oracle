@@ -75,6 +75,14 @@ namespace WebApplication2.Workers
                             var optionsService = scope.ServiceProvider.GetRequiredService<OptionsService>();
 
                             var games = (await gamesService.GetAllML()).ToList();
+
+                            if (games.Count < 1)
+                            {
+                                _logger.LogInformation("Wait 1 hour ", LogLevel.Information);
+                                await Task.Delay(TimeSpan.FromHours(1));
+                                continue;
+                            }
+
                             _logger.LogInformation("Get Games. Count: " + games.Count, LogLevel.Information);
 
                             var data = _mlContext.Data.LoadFromEnumerable<MLGame>(games);

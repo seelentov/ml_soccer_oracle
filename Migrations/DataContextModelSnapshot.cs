@@ -17,6 +17,27 @@ namespace WebApplication2.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.7");
 
+            modelBuilder.Entity("WebApplication2.Models.CheckedGame", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CheckedGames");
+                });
+
             modelBuilder.Entity("WebApplication2.Models.Game", b =>
                 {
                     b.Property<int>("Id")
@@ -76,6 +97,9 @@ namespace WebApplication2.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("Parsed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ParsedNested")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")

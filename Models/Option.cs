@@ -2,9 +2,7 @@
 
 namespace WebApplication2.Models
 {
-    public class Option:BaseEntity
+    public class Option: KeyValueEntity<string, string>
     {
-        public string Key { get; set; }
-        public string Value { get; set; }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using System.Linq.Expressions;
 using WebApplication2.Data;
 using WebApplication2.Models;
@@ -7,7 +9,7 @@ using WebApplication2.Services.Interfaces;
 
 namespace WebApplication2.Services
 {
-    public class GamesService : IEntityGetter<Game>, IEntitySetter<Game>
+    public class GamesService : IEntityGetter<Game>, IEntitySetter<Game>, ICachingChecker<CheckedGame>
     {
         private readonly DataContext _dbContext;
         private readonly MLGameAdapter _MLGameAdapter;
@@ -143,5 +145,16 @@ namespace WebApplication2.Services
             _dbContext.SaveChanges();
         }
 
+        public async Task<bool> CheckIsCached(string value)
+        {
+            var data = _dbContext.CheckedGames.FirstOrDefault(c=>c.Value == value);
+            return data != null;
+        }
+
+        public async Task AddCached(string value)
+        {
+            _dbContext.CheckedGames.Add(new CheckedGame() { Value = value });
+            _dbContext.SaveChanges();
+        }
     }
 }

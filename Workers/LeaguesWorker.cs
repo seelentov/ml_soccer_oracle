@@ -40,21 +40,28 @@ namespace WebApplication2.Workers
                         try
                         {
                             var leaguesService = scope.ServiceProvider.GetRequiredService<LeaguesService>();
-                            
+
                             var parsedLeagues = await _soccer365parser.GetLeagues(_options);
 
                             foreach (var parsedLeague in parsedLeagues)
                             {
-                                var nestedLeagues = await _soccer365parser.GetNestedLeagues(parsedLeague, _options);
+                                var league = await leaguesService.Get(l=>l.Url == parsedLeague.Url);
 
-                                foreach(var nestedLeague in nestedLeagues)
+                                if (!(league != null && league.ParsedNested))
                                 {
-                                    await leaguesService.UpdateOrAdd(nestedLeague);
-                                    _logger.LogInformation("Add nested league in DB " + nestedLeague.Name, Microsoft.Extensions.Logging.LogLevel.Information);
+                                    var nestedLeagues = await _soccer365parser.GetNestedLeagues(parsedLeague, _options);
 
+                                    foreach (var nestedLeague in nestedLeagues)
+                                    {
+                                        await leaguesService.UpdateOrAdd(nestedLeague);
+                                        _logger.LogInformation("Add nested league in DB " + nestedLeague.Name, Microsoft.Extensions.Logging.LogLevel.Information);
+                                    }
                                 }
 
                                 await leaguesService.UpdateOrAdd(parsedLeague);
+
+                                leaguesService.CheckParsedNested(l => l.Url == parsedLeague.Url);
+
                                 _logger.LogInformation("Add league in DB " + parsedLeague.Name, Microsoft.Extensions.Logging.LogLevel.Information);
                             }
 

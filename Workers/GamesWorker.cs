@@ -49,7 +49,7 @@ namespace WebApplication2.Workers
 
                             foreach (var league in leagues)
                             {
-                                if (league.Parsed && league.Year != null && league.Year < DateTime.Now.Year)
+                                if (league.Parsed && gamesService.Get(g => g.MatchDate > DateTime.UtcNow.AddDays(-1) && g.League.Id == league.Id) == null)
                                 {
                                     continue;
                                 }
@@ -60,6 +60,12 @@ namespace WebApplication2.Workers
 
                                 foreach (var gameLink in gameLinks)
                                 {
+                                    
+                                    if (await gamesService.CheckIsCached(gameLink))
+                                    {
+                                        continue;
+                                    }
+
                                     var gameChecker = await gamesService.Get(g => g.Url == gameLink);
 
                                     if (gameChecker != null && (gameChecker.MatchDate.Year < DateTime.Now.Year || gameChecker.UpdatedAt > DateTime.UtcNow.AddHours(-1)))
@@ -81,6 +87,10 @@ namespace WebApplication2.Workers
 
                                         await gamesService.UpdateOrAdd(game);
                                         _logger.LogInformation(game.Team1.Name + " | " + game.Team2.Name + " add in DB (" + game.Url + ")", Microsoft.Extensions.Logging.LogLevel.Information);
+                                    }
+                                    else
+                                    {
+                                        await gamesService.AddCached(gameLink);
                                     }
                                 }
 
