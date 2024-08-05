@@ -74,7 +74,12 @@ namespace WebApplication2.Workers
                             _logger.LogInformation("Start ML Cycle", LogLevel.Information);
 
                             var gamesService = scope.ServiceProvider.GetRequiredService<GamesService>();
+                            var leaguesService = scope.ServiceProvider.GetRequiredService<LeaguesService>();
                             var optionsService = scope.ServiceProvider.GetRequiredService<OptionsService>();
+
+                            var leaguesCount = (await leaguesService.GetAll()).Count();
+                            var leaguesParsedCount = (await leaguesService.GetRange(l => l.Parsed)).Count();
+
 
                             var games = (await gamesService.GetAllML()).ToList();
 
@@ -118,11 +123,11 @@ namespace WebApplication2.Workers
                             await optionsService.UpdateOrAdd(new Option() { Key = "ML_RMS error", Value = $"{metrics.RootMeanSquaredError:0.##}" });
                             await optionsService.UpdateOrAdd(new Option() { Key = "ML_MS error", Value = $"{metrics.MeanSquaredError:0.##}" });
 
-                            await _telegramService.SendMessage($"R^2: {metrics.RSquared:0.##}\nRMS error: {metrics.RootMeanSquaredError:0.##}\nMS error: {metrics.MeanSquaredError:0.##}\nGames count: {games.Count}", "MLWorkerStat");
+                            await _telegramService.SendMessage($"R^2: {metrics.RSquared:0.##}\nRMS error: {metrics.RootMeanSquaredError:0.##}\nMS error: {metrics.MeanSquaredError:0.##}\nGames count: {games.Count}\nLeagues: {leaguesParsedCount} / {leaguesCount}", "MLWorkerStat");
 
                             _mlContext.Model.Save(model, data.Schema, _modelFilePath);
 
-                            await Task.Delay(TimeSpan.FromHours(12));
+                            await Task.Delay(TimeSpan.FromHours(4));
                         }
                         catch (Exception ex)
                         {
