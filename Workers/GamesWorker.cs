@@ -12,10 +12,11 @@ namespace WebApplication2.Workers
     {
         private readonly ILogger<GamesWorker> _logger;
         private readonly Soccer365Parser _soccer365parser;
-        private readonly IWebDriver _driver;
+        private IWebDriver _driver;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly MethodOptions _options;
+        private MethodOptions _options;
         private readonly TelegramService _telegramService;
+        private readonly SeleniumFactory _seleniumFactory;
 
         public GamesWorker(ILogger<GamesWorker> logger, Soccer365Parser soccer365parser, SeleniumFactory selenium, IServiceScopeFactory scopeFactory, TelegramService telegramService)
         {
@@ -23,13 +24,29 @@ namespace WebApplication2.Workers
             _soccer365parser = soccer365parser;
             _driver = selenium.Get();
             _scopeFactory = scopeFactory;
-
+            _seleniumFactory = selenium;
             _options = new MethodOptions()
             {
                 driver = _driver,
                 wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
             };
             _telegramService = telegramService;
+        }
+
+        public void ReBuildDriver()
+        {
+            if (_driver != null)
+            {
+                _driver.Quit();
+            }
+
+            _driver = _seleniumFactory.Get();
+
+            _options = new MethodOptions()
+            {
+                wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)),
+                driver = _driver
+            };
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -104,6 +121,7 @@ namespace WebApplication2.Workers
                         {
                             _logger.LogInformation(ex, ex.Message, Microsoft.Extensions.Logging.LogLevel.Error);
                             await _telegramService.SendMessage(ex.Message, "GamesWorkerError");
+                            ReBuildDriver();
                         }
                     }
 
