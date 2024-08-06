@@ -336,7 +336,7 @@ namespace WebApplication2.Services
 
             float? result = null;
 
-            if (!team1ScoreElem.Contains("-"))
+            if (!(team1ScoreElem.Contains("-") || !team2ScoreElem.Contains("-") || team1ScoreElem.Contains("+") || !team2ScoreElem.Contains("+")))
             {
                 var team1Score = _formatService.ToFloat(team1ScoreElem);
                 var team2Score = _formatService.ToFloat(team2ScoreElem);
