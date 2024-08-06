@@ -134,7 +134,6 @@ namespace WebApplication2.Workers
         {
             if (_driver != null)
             {
-                _driver.Close();
                 _driver.Quit();
             }
 
